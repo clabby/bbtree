@@ -1,0 +1,3 @@
+# The Zig benchmark compiles for the native CPU, so the Rust maps do too.
+[build]
+rustflags = ["-C", "target-cpu=native"]

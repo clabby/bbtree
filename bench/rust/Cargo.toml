@@ -1,0 +1,17 @@
+[package]
+name = "bbtree-bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Compares bbtree's Zig map with Rust's ordered maps, operation by operation"
+
+[dependencies]
+bbtree = "0.2"
+crossbeam-skiplist = "0.1"
+mimalloc = "0.1"
+
+# As upstream bbtree's own benchmarks build it, so that inlining doesn't depend on how the
+# compiler splits the crate.
+[profile.release]
+codegen-units = 1
+lto = "fat"

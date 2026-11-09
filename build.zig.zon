@@ -1,0 +1,13 @@
+.{
+    .name = .bbtree,
+    .version = "0.1.0",
+    .fingerprint = 0x8176aa1fb9738b57,
+    .minimum_zig_version = "0.17.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "bench",
+    },
+}

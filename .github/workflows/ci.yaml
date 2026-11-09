@@ -1,0 +1,79 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  merge_group:
+  pull_request:
+
+env:
+  ZIG_VERSION: 0.17.1
+
+jobs:
+  zig-test:
+    name: Zig tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - uses: taiki-e/install-action@just
+      - name: Debug
+        run: just test
+      - name: ReleaseSafe, scaled up
+        run: just test-stress 4
+
+  zig-cross:
+    name: Zig cross builds (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-linux-musl
+          - aarch64-linux-gnu
+          - x86_64-macos
+          - x86_64-windows-gnu
+          - riscv64-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - name: Library and benchmarks
+        run: zig build install -Doptimize=ReleaseFast -Dtarget=${{ matrix.target }}
+
+  zig-lint:
+    name: Zig format and line length
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - uses: taiki-e/install-action@just
+      - run: zig fmt --check src bench build.zig
+      - run: just check-lines
+
+  bench-harness:
+    name: Benchmark harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bench/rust
+      - uses: taiki-e/install-action@just
+      - run: cd bench/rust && cargo fmt --check
+      - run: just clippy
